@@ -37,6 +37,10 @@ public final class ItemCatalog {
                 true, null));
         add(new Item(ItemID.CREW_CARD, "Tarja de tripulant", "Tarja personal per obrir portes.", false, true, null));
         add(new Item(ItemID.SNORKEL, "Snorkel", "Permet veure sota l'aigua al bany inundat.", false, true, null));
+        add(new Item(ItemID.FLASHLIGHT, "Llanterna", "Permet registrar zones fosques, com la cuina sense llum.",
+                false, true, null));
+        add(new Item(ItemID.SMALL_KEY, "Clau petita", "Obre l'armari del vestit especial al vestuari.", false,
+                true, null));
     }
 
     /**

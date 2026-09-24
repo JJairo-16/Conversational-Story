@@ -181,6 +181,8 @@ public class GameLoop {
         if (success) {
             Prettier.info("Vas a: %s", destination.getName());
             state.advancePlayerTurn();
+        } else if (state.isRoomLockedForPlayer(destination.getId())) {
+            Prettier.warn("La sala de comandament està bloquejada. Necessites la tarja de tripulant.");
         } else {
             Prettier.warn("No pots anar a aquesta sala.");
         }

@@ -60,7 +60,8 @@ public final class ShipMap {
     private void createRooms() {
         add(new Room(RoomID.WORKSHOPS, "Tallers", "Zona on es guarden eines i peces de reparació."));
         add(new Room(RoomID.COSTUME, "Vestuari", "Sala amb equipament per sortir a l'exterior."));
-        add(new Room(RoomID.KITCHEN, "Cuina", "Espai de menjar i subministraments."));
+        add(new Room(RoomID.KITCHEN, "Cuina",
+                "Espai de menjar i subministraments. La llum no funciona i els racons queden a les fosques."));
         add(new Room(RoomID.BATHROOM, "Banys", "Zona inundada de banys de la tripulació."));
         add(new Room(RoomID.BEDROOM, "Dormitori", "Zona d'hibernació i descans de la tripulació."));
         add(new Room(RoomID.OFFICES, "Oficines", "Zona central de treball de la nau."));
@@ -81,8 +82,8 @@ public final class ShipMap {
         getRoom(RoomID.LIVING_ROOM).addAction(RoomAction.SEARCH_TABLE);
         getRoom(RoomID.LIVING_ROOM).addAction(RoomAction.TALK_CREW);
 
-        getRoom(RoomID.KITCHEN).addAction(RoomAction.SEARCH_PANTRY);
-        getRoom(RoomID.KITCHEN).addAction(RoomAction.PREPARE_BAIT);
+        getRoom(RoomID.KITCHEN).addAction(RoomAction.SEARCH_DARK_PANTRY);
+        getRoom(RoomID.KITCHEN).addAction(RoomAction.PREPARE_BAIT_IN_DARK);
 
         getRoom(RoomID.OFFICES).addAction(RoomAction.CHECK_TERMINAL);
         getRoom(RoomID.OFFICES).addAction(RoomAction.OPEN_DESK);

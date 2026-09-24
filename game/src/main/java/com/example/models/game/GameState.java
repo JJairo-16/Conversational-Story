@@ -137,13 +137,23 @@ public final class GameState {
      */
     public boolean move(Direction direction) {
         Room destination = shipMap.getConnectedRoom(getCurrentRoom(), direction);
-        if (destination == null) {
+        if (destination == null || isRoomLockedForPlayer(destination.getId())) {
             return false;
         }
 
         entityManager.getPlayer().moveTo(destination.getId());
 
         return true;
+    }
+
+    /**
+     * Indicates whether the player lacks the requirement for a room.
+     *
+     * @param roomId destination room identifier
+     * @return {@code true} when the room is currently locked
+     */
+    public boolean isRoomLockedForPlayer(RoomID roomId) {
+        return roomId == RoomID.COMMAND && !getInventory().has(ItemID.CREW_CARD);
     }
 
     /**

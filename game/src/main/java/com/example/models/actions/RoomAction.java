@@ -22,11 +22,11 @@ public enum RoomAction {
     /** Talk to the crew member if present. */
     TALK_CREW("Parlar amb tripulant"),
 
-    /** Search the pantry for food or bait. */
-    SEARCH_PANTRY("Registrar rebost"),
+    /** Search the dark pantry for food or bait. */
+    SEARCH_DARK_PANTRY("Registrar rebost a les fosques"),
 
-    /** Prepare bait for Malien. */
-    PREPARE_BAIT("Preparar esquer"),
+    /** Prepare bait for Malien in the dark kitchen. */
+    PREPARE_BAIT_IN_DARK("Preparar esquer a la cuina"),
 
     /** Check the office terminal. */
     CHECK_TERMINAL("Consultar terminal"),

@@ -121,6 +121,10 @@ public final class RoomActionHandler {
             return ActionResult.success("Registres la taula i hi trobes un snorkel.");
         }
 
+        if (takeItemIfPresent(state, ItemID.FLASHLIGHT)) {
+            return ActionResult.success("Registres la taula i hi trobes una llanterna.");
+        }
+
         return ActionResult.success("Registres la taula, però no hi queda res útil.");
     }
 

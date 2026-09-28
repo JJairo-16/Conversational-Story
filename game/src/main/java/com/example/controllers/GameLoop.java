@@ -35,6 +35,7 @@ public class GameLoop {
             ActionType.INVENTORY,
             ActionType.MAP,
             ActionType.INTERACTION,
+            ActionType.I_HALL,
             ActionType.WAIT,
             ActionType.EXIT);
 
@@ -82,11 +83,12 @@ public class GameLoop {
     public void run() {
         GameRandom random = new GameRandom(System.currentTimeMillis());
         GameState state = new GameGenerator(random).generate();
+        IHall iHall = IHall.create(state.getRoute(), random);
         boolean running = true;
 
         while (running && !state.isGameOver()) {
             ActionType actionType = readMenuOption(state);
-            running = handleMenuShell(actionType, state);
+            running = handleMenuShell(actionType, state, iHall);
         }
     }
 
@@ -126,12 +128,15 @@ public class GameLoop {
      * @param state      current game state
      * @return {@code false} only when the player chooses to exit the session
      */
-    private boolean handleMenuShell(ActionType actionType, GameState state) {
+    private boolean handleMenuShell(ActionType actionType, GameState state, IHall iHall) {
         switch (actionType) {
             case NAVIGATION -> handleNavigationMenu(state);
             case INVENTORY -> handleInventoryMenu(state);
             case MAP -> handleMapMenu(state);
-            case INTERACTION -> handleInteractionMenu(state);
+            case INTERACTION -> {
+                return handleInteractionMenu(state);
+            }
+            case I_HALL -> talkToIHall(iHall);
             case WAIT -> handleWaitMenu(state);
             case EXIT -> {
                 cleaner.clear();
@@ -423,21 +428,22 @@ public class GameLoop {
      * objects are relevant.
      *
      * @param state current game state
+     * @return {@code false} only when a successful action ends the session
      */
-    private void handleInteractionMenu(GameState state) {
+    private boolean handleInteractionMenu(GameState state) {
         List<RoomAction> actions = getCurrentRoomActions(state);
 
         if (actions.isEmpty()) {
             Prettier.warn("No hi ha interaccions disponibles en aquesta sala.");
             Menu.pause();
-            return;
+            return true;
         }
 
         List<String> options = GameMenuBuilder.createInteractionMenu(actions);
         int option = Menu.getOption(options, "Interaccions");
 
         if (option == options.size()) {
-            return;
+            return true;
         }
 
         RoomAction selected = actions.get(option - 1);
@@ -452,6 +458,17 @@ public class GameLoop {
         }
 
         Menu.pause();
+        if (selected != RoomAction.START_ENGINES)
+            return true;
+
+        return !result.success();
+    }
+
+    private void talkToIHall(IHall iHall) {
+        cleaner.clear();
+        Prettier.printTitle("iHall");
+        Prettier.info(iHall.nextResponse());
+        Menu.pause();
     }
 
     private List<RoomAction> getCurrentRoomActions(GameState state) {
@@ -461,6 +478,7 @@ public class GameLoop {
                 .filter(action -> action != RoomAction.COLLECT_VISIBLE_ITEMS)
                 .filter(action -> action != RoomAction.TALK_CREW)
                 .filter(action -> action != RoomAction.WAKE_CREW)
+                .filter(action -> isRoomActionUseful(state, action))
                 .toList());
 
         if (!RoomItemVisibility.getVisibleItems(state).isEmpty()) {
@@ -477,6 +495,46 @@ public class GameLoop {
         return actions.stream()
                 .sorted(ROOM_ACTION_COMPARATOR)
                 .toList();
+    }
+
+    /**
+     * Indicates whether a fixed room action can still affect the current state.
+     *
+     * @param state  current game state
+     * @param action room action to inspect
+     * @return {@code true} when the action should be shown
+     */
+    private boolean isRoomActionUseful(GameState state, RoomAction action) {
+        Room currentRoom = state.getCurrentRoom();
+        return switch (action) {
+            case CHECK_LOCKER -> hasAnyItem(currentRoom, ItemID.FLASHLIGHT, ItemID.SNORKEL, ItemID.SMALL_KEY);
+            case INSPECT_FLOODED_DRAIN -> currentRoom.hasItem(ItemID.CREW_CARD) && !state.isFloodedDrainRevealed();
+            case SEARCH_TABLE -> hasAnyItem(currentRoom, ItemID.SMALL_KEY, ItemID.SNORKEL, ItemID.FLASHLIGHT);
+            case OPEN_DESK -> hasAnyItem(currentRoom, ItemID.CREW_CARD, ItemID.SNORKEL);
+            case OPEN_SUIT_LOCKER -> !state.getInventory().has(ItemID.ASTRONAUT_SUIT);
+            case SEARCH_TOOLS -> hasAnyItem(currentRoom, ItemID.REPAIR_TOOL, ItemID.FLASHLIGHT);
+            case INSPECT_ENGINES -> !state.areEnginesInspected();
+            case REPAIR_ENGINES -> !state.areEnginesRepaired();
+            case START_ENGINES -> true;
+            case COLLECT_VISIBLE_ITEMS, TALK_CREW, WAKE_CREW -> true;
+        };
+    }
+
+    /**
+     * Indicates whether a room contains at least one of the given items.
+     *
+     * @param room  room to inspect
+     * @param items accepted item identifiers
+     * @return {@code true} when any item is present
+     */
+    private boolean hasAnyItem(Room room, ItemID... items) {
+        for (ItemID item : items) {
+            if (room.hasItem(item)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean canInteractWithCrewMember(GameState state) {
@@ -507,12 +565,11 @@ public class GameLoop {
      */
     private String getWaitMessage(GameState state) {
         GameRandom random = state.getRandom();
-        
+
         List<String> messages = random.chance(NORMAL_WAIT_MESSAGE_CHANCE)
                 ? NORMAL_WAIT_MESSAGES
                 : SILLY_WAIT_MESSAGES;
-                
-        int messageIndex = random.nextInt(messages.size());
-        return messages.get(messageIndex);
+
+        return random.getRandomIndex(messages);
     }
 }

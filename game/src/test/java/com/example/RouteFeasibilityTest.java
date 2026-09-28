@@ -1,5 +1,6 @@
 package com.example;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,9 @@ final class RouteFeasibilityTest {
         action(state, RoomAction.COLLECT_VISIBLE_ITEMS);
         move(state, Direction.SOUTH);
         move(state, Direction.WEST);
+        action(state, RoomAction.SEARCH_TABLE);
+        assertTrue(state.getInventory().has(ItemID.FLASHLIGHT), "Search table must provide the flashlight");
         move(state, Direction.WEST);
-        action(state, RoomAction.COLLECT_VISIBLE_ITEMS);
         use(state, ItemID.FLASHLIGHT);
         action(state, RoomAction.COLLECT_VISIBLE_ITEMS);
         move(state, Direction.NORTH);
@@ -78,6 +80,16 @@ final class RouteFeasibilityTest {
         move(state, Direction.WEST);
 
         completeFromCostume(state);
+    }
+
+    @Test
+    void flashlightIsNeverPlacedInKitchen() {
+        for (GameRoute route : GameRoute.values()) {
+            GameState state = createState(route);
+
+            assertFalse(state.getRoom(RoomID.KITCHEN).hasItem(ItemID.FLASHLIGHT),
+                    () -> route + " must not place the flashlight in the kitchen");
+        }
     }
 
     private static GameState createState(GameRoute route) {

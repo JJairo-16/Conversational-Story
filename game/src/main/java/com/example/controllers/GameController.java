@@ -1,6 +1,7 @@
 package com.example.controllers;
 
 import com.example.utils.input.Getters;
+import com.example.utils.ui.IntroStory;
 
 /**
  * Coordinates the main game flow.
@@ -25,11 +26,12 @@ public class GameController {
     }
 
     private static void initializeGame() {
+        new IntroStory().show();
         GameLoop gameLoop = new GameLoop();
         gameLoop.run();
     }
 
     private static boolean playAgain() {
-        return getters.getBoolean("Vols jugar de nou? ", false, "Si", "No");
+        return getters.getBoolean("Vols jugar de nou? ", false, "Sí", "No");
     }
 }

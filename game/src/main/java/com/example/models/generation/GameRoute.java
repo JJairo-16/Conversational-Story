@@ -32,7 +32,7 @@ public enum GameRoute {
             placeCommonProgressionItems(shipMap);
             shipMap.getRoom(RoomID.BATHROOM).addItem(ItemID.SMALL_KEY);
             shipMap.getRoom(RoomID.BEDROOM).addItem(ItemID.SNORKEL);
-            shipMap.getRoom(RoomID.KITCHEN).addItem(ItemID.FLASHLIGHT);
+            shipMap.getRoom(RoomID.LIVING_ROOM).addItem(ItemID.FLASHLIGHT);
             entityManager.getCrewMember().moveTo(RoomID.BEDROOM);
             entityManager.getCrewMember().setWakeBehavior(WakeResultType.START_WANDERING,
                     "El tripulant desperta, et dona la seva tarja i marxa a revisar la nau.");

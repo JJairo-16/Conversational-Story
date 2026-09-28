@@ -1,5 +1,6 @@
 package com.example.models.generation;
 
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -41,6 +42,46 @@ public final class GameRandom {
      */
     public boolean chance(int percent) {
         return random.nextInt(100) < percent;
+    }
+
+    /**
+     * Returns a random element from an array.
+     *
+     * @param <T> element type
+     * @param arr source array; must not be empty
+     * @return randomly selected element
+     * @throws IllegalArgumentException if {@code arr} is empty
+     */
+    public <T> T getRandomIndex(T[] arr) {
+        if (arr.length == 0) {
+            throw new IllegalArgumentException("Cannot select a random element from an empty array.");
+        }
+
+        if (arr.length == 1) {
+            return arr[0];
+        }
+
+        return arr[random.nextInt(arr.length)];
+    }
+
+    /**
+     * Returns a random element from a list.
+     *
+     * @param <T> element type
+     * @param list source list; must not be empty
+     * @return randomly selected element
+     * @throws IllegalArgumentException if {@code list} is empty
+     */
+    public <T> T getRandomIndex(List<T> list) {
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("Cannot select a random element from an empty list.");
+        }
+
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+
+        return list.get(random.nextInt(list.size()));
     }
 
     /**

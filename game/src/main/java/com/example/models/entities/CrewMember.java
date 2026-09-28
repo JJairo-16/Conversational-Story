@@ -1,7 +1,7 @@
 package com.example.models.entities;
 
-import com.example.models.game.GameFlag;
 import com.example.models.game.GameState;
+import com.example.models.generation.GameRoute;
 import com.example.models.items.ItemID;
 import com.example.models.map.RoomID;
 
@@ -84,17 +84,17 @@ public final class CrewMember extends Entity implements TurnActor {
     }
 
     private CrewInteractionResult talk(GameState state) {
-        if (state.hasFlag(GameFlag.ROUTE_DRAIN_CARD)) {
+        if (state.getRoute() == GameRoute.DRAIN_CARD) {
             return new CrewInteractionResult(CrewInteractionResultType.TALKED,
                     "El tripulant insisteix: \"Busca al bany inundat. Si pots mirar sota l'aigua, trobaras la tarja.\"");
         }
 
-        if (state.hasFlag(GameFlag.ROUTE_CREW_CARD)) {
+        if (state.getRoute() == GameRoute.CREW_CARD) {
             return new CrewInteractionResult(CrewInteractionResultType.TALKED,
                     "El tripulant diu: \"Ja tens la meva tarja. Ves amb compte amb en Malien.\"");
         }
 
-        if (state.hasFlag(GameFlag.ROUTE_OFFICE_CARD)) {
+        if (state.getRoute() == GameRoute.OFFICE_CARD) {
             return new CrewInteractionResult(CrewInteractionResultType.TALKED,
                     "El tripulant dubta: \"Potser era al bany... o potser la vaig veure a oficines.\"");
         }
@@ -104,14 +104,9 @@ public final class CrewMember extends Entity implements TurnActor {
     }
 
     private void applyWakeResult(GameState state) {
-        if (wakeResult.type() == WakeResultType.START_WANDERING && state.hasFlag(GameFlag.ROUTE_CREW_CARD)
+        if (wakeResult.type() == WakeResultType.START_WANDERING && state.getRoute() == GameRoute.CREW_CARD
                 && !state.getInventory().has(ItemID.CREW_CARD)) {
             state.getInventory().add(ItemID.CREW_CARD);
-            state.addFlag(GameFlag.CREW_CARD_RECOVERED);
-        }
-
-        if (wakeResult.type() == WakeResultType.TRUE_HINT || wakeResult.type() == WakeResultType.FALSE_HINT) {
-            state.addFlag(GameFlag.CREW_CARD_SPOTTED);
         }
     }
 

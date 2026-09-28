@@ -1,6 +1,7 @@
 package com.example.models.game;
 
 import com.example.models.entities.EntityManager;
+import com.example.models.actions.ActionResult;
 import com.example.models.generation.GameRandom;
 import com.example.models.generation.GameRoute;
 import com.example.models.items.Inventory;
@@ -12,7 +13,6 @@ import com.example.models.map.Room;
 import com.example.models.map.RoomID;
 import com.example.models.map.ShipMap;
 import com.example.models.entities.CrewMember;
-
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -37,6 +37,7 @@ public final class GameState {
      * @param itemCatalog   item catalog
      * @param entityManager entity manager
      * @param random        seeded random source
+     * @param route         selected route
      */
     public GameState(ShipMap shipMap, ItemCatalog itemCatalog, EntityManager entityManager, GameRandom random,
             GameRoute route) {
@@ -59,6 +60,10 @@ public final class GameState {
     /**
      * Adds a progress flag.
      *
+     * <p>
+     * Flags are limited to puzzle progress not already represented by the route,
+     * inventory, current room or entity state.
+     *
      * @param flag flag to add
      */
     public void addFlag(GameFlag flag) {
@@ -73,15 +78,6 @@ public final class GameState {
      */
     public boolean hasFlag(GameFlag flag) {
         return flags.contains(flag);
-    }
-
-    /**
-     * Returns a read-only snapshot of active flags.
-     *
-     * @return active flags
-     */
-    public Set<GameFlag> getFlags() {
-        return Set.copyOf(flags);
     }
 
     /**
@@ -211,6 +207,86 @@ public final class GameState {
     }
 
     /**
+     * Reveals the kitchen donut after using the flashlight.
+     */
+    public void revealKitchenDonut() {
+        addFlag(GameFlag.KITCHEN_DONUT_REVEALED);
+    }
+
+    /**
+     * Indicates whether the kitchen donut has been revealed.
+     *
+     * @return {@code true} when visible
+     */
+    public boolean isKitchenDonutRevealed() {
+        return hasFlag(GameFlag.KITCHEN_DONUT_REVEALED);
+    }
+
+    /**
+     * Inspects the flooded bathroom with the snorkel.
+     *
+     * @return inspection result
+     */
+    public ActionResult inspectFloodedDrainWithSnorkel() {
+        if (getCurrentRoom().getId() != RoomID.BATHROOM) {
+            return ActionResult.failure("Aquí no hi ha prou aigua per fer servir l'snorkel.");
+        }
+
+        if (!getInventory().has(ItemID.SNORKEL)) {
+            return ActionResult.failure("L'aigua és massa tèrbola. Necessites l'snorkel per mirar sota l'aigua.");
+        }
+
+        addFlag(GameFlag.FLOODED_DRAIN_REVEALED);
+
+        if (getCurrentRoom().hasItem(ItemID.CREW_CARD)) {
+            return ActionResult.success("Amb l'snorkel mires sota l'aigua i distingeixes la tarja de tripulant.");
+        }
+
+        return ActionResult.success("Mires sota l'aigua, però no hi trobes res important.");
+    }
+
+    /**
+     * Indicates whether the flooded drain has been revealed with the snorkel.
+     *
+     * @return {@code true} when underwater items can be seen
+     */
+    public boolean isFloodedDrainRevealed() {
+        return hasFlag(GameFlag.FLOODED_DRAIN_REVEALED);
+    }
+
+    /**
+     * Marks the engines as inspected.
+     */
+    public void inspectEngines() {
+        addFlag(GameFlag.ENGINES_INSPECTED);
+    }
+
+    /**
+     * Indicates whether the engines have been inspected.
+     *
+     * @return {@code true} when inspected
+     */
+    public boolean areEnginesInspected() {
+        return hasFlag(GameFlag.ENGINES_INSPECTED);
+    }
+
+    /**
+     * Marks the engines as repaired.
+     */
+    public void repairEngines() {
+        addFlag(GameFlag.ENGINES_REPAIRED);
+    }
+
+    /**
+     * Indicates whether the engines have been repaired.
+     *
+     * @return {@code true} when repaired
+     */
+    public boolean areEnginesRepaired() {
+        return hasFlag(GameFlag.ENGINES_REPAIRED);
+    }
+
+    /**
      * Places an inventory item in the current room.
      *
      * @param item item identifier
@@ -230,11 +306,15 @@ public final class GameState {
      * Uses an inventory item.
      *
      * @param item item identifier
-     * @return {@code true} when the item action succeeds
+     * @return item use result
      */
-    public boolean useItem(ItemID item) {
+    public ActionResult useItem(ItemID item) {
         Item definition = itemCatalog.getItem(item);
-        return definition != null && definition.usable() && definition.use(this);
+        if (definition == null || !definition.usable()) {
+            return ActionResult.failure("Ara mateix no pots utilitzar aquest objecte.");
+        }
+
+        return definition.use(this);
     }
 
     /**

@@ -73,31 +73,21 @@ public final class ShipMap {
     }
 
     private void addRoomActions() {
-        getRoom(RoomID.BEDROOM).addAction(RoomAction.SEARCH_CAPSULE);
         getRoom(RoomID.BEDROOM).addAction(RoomAction.CHECK_LOCKER);
 
         getRoom(RoomID.BATHROOM).addAction(RoomAction.INSPECT_FLOODED_DRAIN);
-        getRoom(RoomID.BATHROOM).addAction(RoomAction.DRAIN_WATER);
 
         getRoom(RoomID.LIVING_ROOM).addAction(RoomAction.SEARCH_TABLE);
-        getRoom(RoomID.LIVING_ROOM).addAction(RoomAction.TALK_CREW);
 
-        getRoom(RoomID.KITCHEN).addAction(RoomAction.SEARCH_DARK_PANTRY);
-        getRoom(RoomID.KITCHEN).addAction(RoomAction.PREPARE_BAIT_IN_DARK);
-
-        getRoom(RoomID.OFFICES).addAction(RoomAction.CHECK_TERMINAL);
         getRoom(RoomID.OFFICES).addAction(RoomAction.OPEN_DESK);
 
         getRoom(RoomID.COSTUME).addAction(RoomAction.OPEN_SUIT_LOCKER);
-        getRoom(RoomID.COSTUME).addAction(RoomAction.EQUIP_SUIT);
 
         getRoom(RoomID.WORKSHOPS).addAction(RoomAction.SEARCH_TOOLS);
-        getRoom(RoomID.WORKSHOPS).addAction(RoomAction.CALIBRATE_TOOL);
 
         getRoom(RoomID.EXIT_ROOM).addAction(RoomAction.INSPECT_ENGINES);
         getRoom(RoomID.EXIT_ROOM).addAction(RoomAction.REPAIR_ENGINES);
 
-        getRoom(RoomID.COMMAND).addAction(RoomAction.CHECK_SHIP_MAP);
         getRoom(RoomID.COMMAND).addAction(RoomAction.START_ENGINES);
     }
 

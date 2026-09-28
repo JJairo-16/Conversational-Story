@@ -295,10 +295,11 @@ public class GameLoop {
      * @param state current game state
      */
     private void useInventoryItem(Item item, GameState state) {
-        if (state.useItem(item.id())) {
-            Prettier.info("Has utilitzat: %s", item.name());
+        ActionResult result = state.useItem(item.id());
+        if (result.success()) {
+            Prettier.info(result.message());
         } else {
-            Prettier.warn("Ara mateix no pots utilitzar aquest objecte.");
+            Prettier.warn(result.message());
         }
         Menu.pause();
     }

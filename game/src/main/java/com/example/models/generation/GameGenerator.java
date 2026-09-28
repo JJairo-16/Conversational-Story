@@ -36,7 +36,6 @@ public final class GameGenerator {
         GameRoute route = selectRoute();
         route.setup(shipMap, entityManager);
         GameState state = new GameState(shipMap, itemCatalog, entityManager, random, route);
-        route.setupState(state);
         return state;
     }
 

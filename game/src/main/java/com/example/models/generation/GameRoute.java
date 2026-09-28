@@ -2,8 +2,6 @@ package com.example.models.generation;
 
 import com.example.models.entities.CrewMember.WakeResultType;
 import com.example.models.entities.EntityManager;
-import com.example.models.game.GameFlag;
-import com.example.models.game.GameState;
 import com.example.models.items.ItemID;
 import com.example.models.map.RoomID;
 import com.example.models.map.ShipMap;
@@ -25,11 +23,6 @@ public enum GameRoute {
             entityManager.getCrewMember().setWakeBehavior(WakeResultType.TRUE_HINT,
                     "El tripulant desperta sobresaltat: \"La tarja va caure al desguas dels banys. Necessites alguna cosa per mirar sota l'aigua.\"");
         }
-
-        @Override
-        public void setupState(GameState state) {
-            state.addFlag(GameFlag.ROUTE_DRAIN_CARD);
-        }
     },
 
     /** Route where the crew member gives the crew card after being woken up. */
@@ -43,11 +36,6 @@ public enum GameRoute {
             entityManager.getCrewMember().moveTo(RoomID.BEDROOM);
             entityManager.getCrewMember().setWakeBehavior(WakeResultType.START_WANDERING,
                     "El tripulant desperta, et dona la seva tarja i marxa a revisar la nau.");
-        }
-
-        @Override
-        public void setupState(GameState state) {
-            state.addFlag(GameFlag.ROUTE_CREW_CARD);
         }
     },
 
@@ -64,11 +52,6 @@ public enum GameRoute {
             entityManager.getCrewMember().setWakeBehavior(WakeResultType.FALSE_HINT,
                     "El tripulant desperta confos i insisteix que la tarja es als banys, pero no sembla gaire segur.");
         }
-
-        @Override
-        public void setupState(GameState state) {
-            state.addFlag(GameFlag.ROUTE_OFFICE_CARD);
-        }
     };
 
     private final String displayName;
@@ -84,13 +67,6 @@ public enum GameRoute {
      * @param entityManager entities to position
      */
     public abstract void setup(ShipMap shipMap, EntityManager entityManager);
-
-    /**
-     * Applies route-specific state flags.
-     *
-     * @param state generated state
-     */
-    protected abstract void setupState(GameState state);
 
     /**
      * Returns a player-readable route name.

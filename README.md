@@ -1,199 +1,107 @@
-# 🚀 P000 - Historia Conversacional
+# P000 - Conversational Story
 
-## 📖 Descripción
+- [Jairo Linares](https://github.com/JJairo-16)
 
-Proyecto desarrollado para el módulo **MP13 - Módulo DUAL** del CFGS de **Desarrollo de Aplicaciones Multiplataforma**.
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)
+![Maven](https://img.shields.io/badge/Build-Maven-blue?logo=apachemaven&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-El objetivo del proyecto es crear una **aventura conversacional de texto**, en la que el jugador puede desplazarse por diferentes zonas, interactuar con objetos y personajes y utilizar un inventario para avanzar en la historia.
+P000 - Conversational Story is a Java console adventure game developed as an
+academic project for the Multiplatform Application Development degree.
 
-La aventura está ambientada en el año **2120**, a bordo de la nave espacial **PiaXXII**, que viaja hacia el planeta **SUMMEM**. Después de sufrir daños en el sistema de propulsión, el capitán Bond deberá recorrer la nave, encontrar los objetos necesarios y reparar los motores para poder continuar la misión.
+The player controls Captain Bond aboard the PiaXXII, a spacecraft travelling
+toward the planet SUMMEM. After a propulsion failure, Bond must explore the ship,
+recover key items, avoid Malien, repair the engines, and restart the mission from
+the command room.
 
----
+The game is built around room navigation, inventory management, route-dependent
+item placement, contextual room actions, and a ship computer called iHall that
+may help or mislead the player as its patience runs out.
 
-## 🎮 Objetivo del juego
+## Highlights
 
-El jugador deberá conseguir reparar los propulsores de la nave y regresar a la sala de mando.
+- Console-based text adventure with menu-driven navigation.
+- Seeded game generation with multiple possible routes for the crew card.
+- Room-specific actions for lockers, desks, tools, flooded drains, engines, and crew interaction.
+- Inventory system with usable and placeable items.
+- Hidden item visibility rules, including flashlight and snorkel-based reveals.
+- Malien entity that moves through the ship and can threaten the player.
+- iHall conversation system with route-aware hints and escalating impatience.
+- Introductory story shown before each game session.
+- JUnit 5 route feasibility tests.
 
-Durante la aventura deberá:
+## Game Objective
 
-* Explorar diferentes zonas de la nave.
-* Recoger y dejar objetos.
-* Gestionar un inventario.
-* Conseguir una herramienta para reparar los motores.
-* Conseguir y utilizar un traje espacial.
-* Evitar o distraer a Malien.
-* Reparar los propulsores.
-* Regresar a la sala de mando.
+To complete the adventure, the player must:
 
----
+- Find or obtain a crew card to access locked ship areas.
+- Recover the small key needed to open the astronaut suit locker.
+- Equip the astronaut suit.
+- Find the repair tool in the workshops.
+- Inspect and repair the damaged engines.
+- Return to the command room and start the engines.
 
-## 🗺️ Zonas
+## Main Items
 
-El juego dispone de diferentes zonas conectadas entre sí, entre las cuales se encuentran:
+- `Crew card`: unlocks access to the command room.
+- `Small key`: opens the astronaut suit locker.
+- `Astronaut suit`: required to work outside the ship safely.
+- `Repair tool`: required to repair the engines.
+- `Flashlight`: reveals hidden objects in dark areas.
+- `Snorkel`: allows inspection of flooded areas.
+- `Donut`: can be used to distract Malien.
 
-* Dormitorio
-* Baños
-* Cocina
-* Vestuario
-* Oficinas
-* Taller
-* Comedor
-* Sala de mando
-* Sala de salida exterior
-* Propulsores
+## Repository Layout
 
-Cada zona dispone de su propia descripción, objetos e interacciones.
+- `game`: Maven project for the console game.
+- `docs`: architecture diagrams and supporting documentation.
+- `game/src/main/java/com/example`: application entry point.
+- `game/src/main/java/com/example/controllers`: game loop, room action handling, iHall, and visibility rules.
+- `game/src/main/java/com/example/models/actions`: menu and room action definitions.
+- `game/src/main/java/com/example/models/entities`: player, crew member, Malien, and entity turn logic.
+- `game/src/main/java/com/example/models/game`: mutable game state and progress flags.
+- `game/src/main/java/com/example/models/generation`: seeded route generation.
+- `game/src/main/java/com/example/models/items`: item catalog, inventory, and item implementations.
+- `game/src/main/java/com/example/models/map`: ship rooms, directions, and map graph.
+- `game/src/main/java/com/example/utils`: console input and UI helpers.
+- `game/src/test/java/com/example`: route feasibility tests.
 
----
+## Running The Game
 
+Build the project first:
 
-
-## 🎒 Inventario
-
-El jugador dispone de un inventario donde puede almacenar los objetos que encuentra durante la partida.
-
-Los objetos se pueden:
-
-* Recoger de una zona.
-* Guardar en el inventario.
-* Utilizar.
-* Dejar nuevamente en otra zona.
-
----
-
-## 🧰 Objetos principales
-
-### 🔦 Linterna
-
-La posición de la linterna puede cambiar entre partidas.
-
-Es necesaria para poder encontrar la herramienta dentro del taller.
-
-### 🔧 Herramienta
-
-Se encuentra en el taller.
-
-Permite reparar los propulsores de la nave.
-
-### 🧑‍🚀 Traje espacial
-
-Se encuentra en el vestuario.
-
-Es necesario para poder acceder de forma segura al exterior de la nave.
-
-### 🪪 Tarjeta identificadora
-
-Permite abrir las puertas automáticas de la nave.
-
-La tarjeta personal del capitán se encuentra escondida dentro de las oficinas.
-
-### 🍩 Dónuts
-
-Se encuentran en la cocina.
-
-Sirven para distraer a Malien durante la partida.
-
----
-
-## 👾 Malien
-
-Malien es un alienígena que se mueve libremente por la nave.
-
-Cada dos movimientos del jugador, Malien también se desplaza por la nave.
-
-El jugador deberá evitar encontrarse con él o utilizar determinados objetos, como los dónuts, para distraerlo.
-
----
-
-## 🧠 Funcionamiento general
-
-El ciclo principal del juego sigue aproximadamente este flujo:
-
-1. Mostrar la descripción de la zona actual.
-2. Mostrar los objetos disponibles.
-3. Pedir una orden al jugador.
-4. Interpretar la orden.
-5. Comprobar si la acción es válida.
-6. Ejecutar la acción.
-7. Mostrar las consecuencias de la acción.
-8. Comprobar las condiciones de victoria o derrota.
-9. Continuar la partida.
-
----
-
-## 🏆 Condición de victoria
-
-Para completar la aventura será necesario:
-
-1. Conseguir los objetos necesarios.
-2. Llegar hasta los propulsores.
-3. Reparar los motores.
-4. Regresar a la sala de mando.
-
----
-
-## 💀 Condiciones de derrota
-
-La partida puede finalizar si se producen determinadas situaciones relacionadas con Malien u otros eventos del juego.
-
----
-
-## 🏗️ Estructura del proyecto
-
-```text
-src/
-
-├── ...
-
-├── ...
-
-└── ...
-
-README.md
+```bash
+cd game
+mvn clean package
 ```
 
-> Esta sección se actualizará cuando la estructura definitiva de clases y paquetes esté definida.
+Run the console application:
 
----
+```bash
+java -cp target/classes com.example.App
+```
 
-## 🧩 Programación orientada a objetos
+## Development
 
-El proyecto está diseñado aplicando conceptos de programación orientada a objetos como:
+Run the test suite with:
 
-* Clases y objetos.
-* Encapsulación.
-* Relaciones entre clases.
-* Colecciones.
-* Gestión de estados.
-* Gestión de excepciones.
-* Separación de responsabilidades.
+```bash
+cd game
+mvn clean test
+```
 
----
+The current tests verify that every prefabricated route can reach the engine
+startup sequence and that critical item placement constraints remain valid.
 
-## 👥 Autores
+## Academic Context
 
-Proyecto realizado por:
+- Project: P000 - Conversational Story
+- Program: Multiplatform Application Development
+- Module: MP13 - Dual Module
+- Center: Escola Pia
 
-* **Jairo Lineres**
-* **Pol Ibáñez**
+## License
 
----
+This project is licensed under the [MIT License](LICENSE).
 
-## 🎓 Contexto académico
-
-**Proyecto:** P000 - Historia Conversacional
-**Módulo:** MP13 - Módulo DUAL
-**CFGS:** Desarrollo de Aplicaciones Multiplataforma
-**Centro:** Escola Pia
-
----
-
-## 📄 Licencia
-
-Este proyecto ha sido desarrollado con **fines educativos y académicos**.
-
-El código del proyecto está bajo la licencia **MIT**, lo que permite utilizar, modificar y distribuir el código siempre que se mantenga el aviso de copyright y la licencia original.
-
-Copyright © 2026 **Jairo Lineres y Pol Ibáñez**.
-
-Para más información, consulta el archivo `LICENSE` incluido en el repositorio.
+Author: [Jairo Linares](https://github.com/JJairo-16).

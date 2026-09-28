@@ -71,6 +71,7 @@ public final class GameGenerator {
     }
 
     private GameRoute selectRoute() {
-        return GameRoute.SCAFFOLD;
+        GameRoute[] routes = GameRoute.values();
+        return routes[random.nextInt(routes.length)];
     }
 }

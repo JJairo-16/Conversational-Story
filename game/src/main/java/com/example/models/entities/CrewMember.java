@@ -1,5 +1,8 @@
 package com.example.models.entities;
 
+import com.example.models.game.GameFlag;
+import com.example.models.game.GameState;
+import com.example.models.items.ItemID;
 import com.example.models.map.RoomID;
 
 /**
@@ -13,6 +16,7 @@ public final class CrewMember extends Entity implements TurnActor {
     private boolean asleep = true;
     private boolean wandering;
     private boolean alive = true;
+    private WakeResult wakeResult = new WakeResult(WakeResultType.TRUE_HINT, "");
 
     /**
      * Creates the crew member.
@@ -37,13 +41,78 @@ public final class CrewMember extends Entity implements TurnActor {
      *
      * @return wake result
      */
-    public WakeResult wakeUp() {
+    private CrewInteractionResult wakeUp(GameState state) {
         if (!asleep) {
-            return new WakeResult(WakeResultType.ALREADY_AWAKE, "");
+            return talk(state);
         }
 
         asleep = false;
-        return new WakeResult(WakeResultType.TRUE_HINT, "");
+        if (wakeResult.type() == WakeResultType.START_WANDERING) {
+            startWandering();
+        }
+
+        applyWakeResult(state);
+        return new CrewInteractionResult(CrewInteractionResultType.WOKEN_UP, wakeResult.message());
+    }
+
+    /**
+     * Defines what happens when this crew member is woken in the selected route.
+     *
+     * @param type    wake outcome
+     * @param message message shown to the player
+     */
+    public void setWakeBehavior(WakeResultType type, String message) {
+        wakeResult = new WakeResult(type, message == null ? "" : message);
+    }
+
+    /**
+     * Handles player interaction with this crew member.
+     *
+     * @param state current game state
+     * @return interaction result and message
+     */
+    public CrewInteractionResult interact(GameState state) {
+        if (!alive) {
+            return new CrewInteractionResult(CrewInteractionResultType.DEAD, "El tripulant no pot respondre.");
+        }
+
+        if (asleep) {
+            return wakeUp(state);
+        }
+
+        return talk(state);
+    }
+
+    private CrewInteractionResult talk(GameState state) {
+        if (state.hasFlag(GameFlag.ROUTE_DRAIN_CARD)) {
+            return new CrewInteractionResult(CrewInteractionResultType.TALKED,
+                    "El tripulant insisteix: \"Busca al bany inundat. Si pots mirar sota l'aigua, trobaras la tarja.\"");
+        }
+
+        if (state.hasFlag(GameFlag.ROUTE_CREW_CARD)) {
+            return new CrewInteractionResult(CrewInteractionResultType.TALKED,
+                    "El tripulant diu: \"Ja tens la meva tarja. Ves amb compte amb en Malien.\"");
+        }
+
+        if (state.hasFlag(GameFlag.ROUTE_OFFICE_CARD)) {
+            return new CrewInteractionResult(CrewInteractionResultType.TALKED,
+                    "El tripulant dubta: \"Potser era al bany... o potser la vaig veure a oficines.\"");
+        }
+
+        return new CrewInteractionResult(CrewInteractionResultType.TALKED,
+                "El tripulant no recorda res més que et pugui ajudar.");
+    }
+
+    private void applyWakeResult(GameState state) {
+        if (wakeResult.type() == WakeResultType.START_WANDERING && state.hasFlag(GameFlag.ROUTE_CREW_CARD)
+                && !state.getInventory().has(ItemID.CREW_CARD)) {
+            state.getInventory().add(ItemID.CREW_CARD);
+            state.addFlag(GameFlag.CREW_CARD_RECOVERED);
+        }
+
+        if (wakeResult.type() == WakeResultType.TRUE_HINT || wakeResult.type() == WakeResultType.FALSE_HINT) {
+            state.addFlag(GameFlag.CREW_CARD_SPOTTED);
+        }
     }
 
     /**
@@ -106,6 +175,32 @@ public final class CrewMember extends Entity implements TurnActor {
      * Structured result produced after trying to wake the crew member.
      */
     public record WakeResult(WakeResultType type, String message) {
+    }
+
+    /**
+     * Structured result produced after interacting with the crew member.
+     */
+    public record CrewInteractionResult(CrewInteractionResultType type, String message) {
+    }
+
+    /**
+     * Possible structured outcomes of crew interaction.
+     */
+    public enum CrewInteractionResultType {
+        /** The crew member was woken up by this interaction. */
+        WOKEN_UP,
+
+        /** The crew member was already awake and answered. */
+        TALKED,
+
+        /** The crew member was already awake. */
+        ALREADY_AWAKE,
+
+        /** The player is not in the same room as the crew member. */
+        NOT_IN_ROOM,
+
+        /** The crew member is dead. */
+        DEAD
     }
 
     /**

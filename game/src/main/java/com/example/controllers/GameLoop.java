@@ -98,9 +98,11 @@ public class GameLoop {
      */
     private List<String> createCurrentPositionDetails(GameState state) {
         Room currentRoom = state.getCurrentRoom();
-        return List.of(
-                "Posició actual: " + currentRoom.getName(),
-                currentRoom.getDescription());
+        List<String> details = new ArrayList<>();
+        details.add("Posició actual: " + currentRoom.getName());
+        details.add(currentRoom.getDescription());
+        details.addAll(RoomItemVisibility.describeCurrentRoomItems(state));
+        return details;
     }
 
     /**
@@ -422,11 +424,7 @@ public class GameLoop {
      * @param state current game state
      */
     private void handleInteractionMenu(GameState state) {
-        List<RoomAction> actions = state.getCurrentRoom()
-                .getActions()
-                .stream()
-                .sorted(ROOM_ACTION_COMPARATOR)
-                .toList();
+        List<RoomAction> actions = getCurrentRoomActions(state);
 
         if (actions.isEmpty()) {
             Prettier.warn("No hi ha interaccions disponibles en aquesta sala.");
@@ -444,16 +442,45 @@ public class GameLoop {
         RoomAction selected = actions.get(option - 1);
         ActionResult result = RoomActionHandler.handle(selected, state);
 
-        if (result.message().isBlank()) {
-            return;
+        if (!result.message().isBlank()) {
+            if (result.success()) {
+                Prettier.info(result.message());
+            } else {
+                Prettier.warn(result.message());
+            }
         }
 
-        if (result.success()) {
-            Prettier.info(result.message());
-        } else {
-            Prettier.warn(result.message());
-        }
         Menu.pause();
+    }
+
+    private List<RoomAction> getCurrentRoomActions(GameState state) {
+        List<RoomAction> actions = new ArrayList<>(state.getCurrentRoom()
+                .getActions()
+                .stream()
+                .filter(action -> action != RoomAction.COLLECT_VISIBLE_ITEMS)
+                .filter(action -> action != RoomAction.TALK_CREW)
+                .filter(action -> action != RoomAction.WAKE_CREW)
+                .toList());
+
+        if (!RoomItemVisibility.getVisibleItems(state).isEmpty()) {
+            actions.add(RoomAction.COLLECT_VISIBLE_ITEMS);
+        }
+
+        if (canInteractWithCrewMember(state)) {
+            RoomAction crewAction = state.getEntityManager().getCrewMember().isAsleep()
+                    ? RoomAction.WAKE_CREW
+                    : RoomAction.TALK_CREW;
+            actions.add(crewAction);
+        }
+
+        return actions.stream()
+                .sorted(ROOM_ACTION_COMPARATOR)
+                .toList();
+    }
+
+    private boolean canInteractWithCrewMember(GameState state) {
+        var crewMember = state.getEntityManager().getCrewMember();
+        return crewMember.isAlive() && crewMember.getCurrentRoom() == state.getCurrentRoom().getId();
     }
 
     /**

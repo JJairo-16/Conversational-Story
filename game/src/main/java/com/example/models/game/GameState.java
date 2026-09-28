@@ -11,6 +11,7 @@ import com.example.models.map.Direction;
 import com.example.models.map.Room;
 import com.example.models.map.RoomID;
 import com.example.models.map.ShipMap;
+import com.example.models.entities.CrewMember;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -237,12 +238,12 @@ public final class GameState {
     }
 
     /**
-     * Wakes the crew member.
+     * Interacts with the crew member.
      *
-     * @return wake result
+     * @return interaction result
      */
-    public com.example.models.entities.CrewMember.WakeResult wakeCrewMember() {
-        return entityManager.wakeCrewMember();
+    public CrewMember.CrewInteractionResult interactWithCrewMember() {
+        return entityManager.interactWithCrewMember(this);
     }
 
     /**

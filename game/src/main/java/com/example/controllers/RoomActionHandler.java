@@ -1,7 +1,11 @@
 package com.example.controllers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.models.actions.ActionResult;
 import com.example.models.actions.RoomAction;
+import com.example.models.entities.CrewMember.CrewInteractionResult;
 import com.example.models.game.GameFlag;
 import com.example.models.game.GameState;
 import com.example.models.items.ItemID;
@@ -10,10 +14,9 @@ import com.example.models.items.ItemID;
  * Resolves actions selected from a room interaction menu.
  *
  * <p>
- * Room actions are responsible for deciding whether inventory objects matter in
- * that room. For example, the snorkel should not solve anything when used
- * directly from the inventory; the flooded-drain room action should inspect the
- * inventory and decide whether the player can see under the water.
+ * This handler only coordinates the menu action with the model. Concrete entity
+ * behavior belongs to the entity itself, and full room puzzle logic should live
+ * outside this dispatcher when those puzzles are implemented.
  */
 public final class RoomActionHandler {
     /**
@@ -32,6 +35,12 @@ public final class RoomActionHandler {
      */
     public static ActionResult handle(RoomAction action, GameState state) {
         switch (action) {
+            case COLLECT_VISIBLE_ITEMS:
+                return collectVisibleItems(state);
+            case WAKE_CREW:
+                return interactWithCrew(state);
+            case TALK_CREW:
+                return interactWithCrew(state);
             case SEARCH_DARK_PANTRY:
                 return searchDarkPantry(state);
             case PREPARE_BAIT_IN_DARK:
@@ -39,10 +48,37 @@ public final class RoomActionHandler {
             case OPEN_SUIT_LOCKER:
                 return openSuitLocker(state);
             default:
-                break;
+                return ActionResult.success("");
+        }
+    }
+
+    private static ActionResult interactWithCrew(GameState state) {
+        CrewInteractionResult result = state.interactWithCrewMember();
+        return switch (result.type()) {
+            case NOT_IN_ROOM, DEAD -> ActionResult.failure(result.message());
+            case WOKEN_UP, TALKED, ALREADY_AWAKE -> ActionResult.success(result.message());
+        };
+    }
+
+    private static ActionResult collectVisibleItems(GameState state) {
+        List<ItemID> visibleItems = new ArrayList<>(RoomItemVisibility.getVisibleItems(state));
+        if (visibleItems.isEmpty()) {
+            return ActionResult.failure("No hi ha cap objecte visible per recollir.");
         }
 
-        return ActionResult.success("");
+        List<String> collectedNames = new ArrayList<>();
+
+        for (ItemID itemId : visibleItems) {
+            if (state.takeItem(itemId)) {
+                collectedNames.add(RoomItemVisibility.formatItemName(state, itemId));
+            }
+        }
+
+        if (collectedNames.isEmpty()) {
+            return ActionResult.failure("No has pogut recollir cap objecte.");
+        }
+
+        return ActionResult.success("Has recollit: " + String.join(", ", collectedNames) + ".");
     }
 
     private static ActionResult searchDarkPantry(GameState state) {
@@ -54,7 +90,12 @@ public final class RoomActionHandler {
             return ActionResult.success("Ja has agafat el dònut útil del rebost.");
         }
 
-        state.getInventory().add(ItemID.DONUT);
+        if (state.getCurrentRoom().hasItem(ItemID.DONUT)) {
+            state.takeItem(ItemID.DONUT);
+        } else {
+            state.getInventory().add(ItemID.DONUT);
+        }
+
         return ActionResult.success("Amb la llanterna trobes un dònut que pot servir d'esquer.");
     }
 

@@ -7,6 +7,9 @@ public enum RoomAction {
     /** Search the cryosleep capsule area. */
     SEARCH_CAPSULE("Registrar càpsula"),
 
+    /** Collect visible items in the current room. */
+    COLLECT_VISIBLE_ITEMS("Recollir objectes visibles"),
+
     /** Check the personal locker in the bedroom. */
     CHECK_LOCKER("Revisar taquilla"),
 
@@ -18,6 +21,9 @@ public enum RoomAction {
 
     /** Search the dining table. */
     SEARCH_TABLE("Registrar taula"),
+
+    /** Wake the crew member if present and asleep. */
+    WAKE_CREW("Despertar tripulant"),
 
     /** Talk to the crew member if present. */
     TALK_CREW("Parlar amb tripulant"),

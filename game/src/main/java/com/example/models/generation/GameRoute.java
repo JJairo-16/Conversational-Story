@@ -1,25 +1,73 @@
 package com.example.models.generation;
 
+import com.example.models.entities.CrewMember.WakeResultType;
 import com.example.models.entities.EntityManager;
+import com.example.models.game.GameFlag;
 import com.example.models.game.GameState;
+import com.example.models.items.ItemID;
+import com.example.models.map.RoomID;
 import com.example.models.map.ShipMap;
 
 /**
- * Game routes prepared for future implementation.
- *
- * <p>
- * This enum is intentionally minimal: concrete route setup should be implemented
- * by hand later.
+ * Prefabricated game routes used by the seeded game generator.
  */
 public enum GameRoute {
-    /** Empty route used while the game is still a scaffold. */
-    SCAFFOLD("Ruta pendent") {
+    /** Route where the crew card has fallen into the flooded bathroom drain. */
+    DRAIN_CARD("Tarja al desguas") {
         @Override
         public void setup(ShipMap shipMap, EntityManager entityManager) {
+            placeCommonProgressionItems(shipMap);
+            shipMap.getRoom(RoomID.BEDROOM).addItem(ItemID.FLASHLIGHT);
+            shipMap.getRoom(RoomID.LIVING_ROOM).addItem(ItemID.SMALL_KEY);
+            shipMap.getRoom(RoomID.BATHROOM).addItem(ItemID.CREW_CARD);
+            shipMap.getRoom(RoomID.OFFICES).addItem(ItemID.SNORKEL);
+            entityManager.getCrewMember().moveTo(RoomID.BEDROOM);
+            entityManager.getCrewMember().setWakeBehavior(WakeResultType.TRUE_HINT,
+                    "El tripulant desperta sobresaltat: \"La tarja va caure al desguas dels banys. Necessites alguna cosa per mirar sota l'aigua.\"");
         }
 
         @Override
         public void setupState(GameState state) {
+            state.addFlag(GameFlag.ROUTE_DRAIN_CARD);
+        }
+    },
+
+    /** Route where the crew member gives the crew card after being woken up. */
+    CREW_CARD("Tarja del tripulant") {
+        @Override
+        public void setup(ShipMap shipMap, EntityManager entityManager) {
+            placeCommonProgressionItems(shipMap);
+            shipMap.getRoom(RoomID.BATHROOM).addItem(ItemID.SMALL_KEY);
+            shipMap.getRoom(RoomID.BEDROOM).addItem(ItemID.SNORKEL);
+            shipMap.getRoom(RoomID.KITCHEN).addItem(ItemID.FLASHLIGHT);
+            entityManager.getCrewMember().moveTo(RoomID.BEDROOM);
+            entityManager.getCrewMember().setWakeBehavior(WakeResultType.START_WANDERING,
+                    "El tripulant desperta, et dona la seva tarja i marxa a revisar la nau.");
+        }
+
+        @Override
+        public void setupState(GameState state) {
+            state.addFlag(GameFlag.ROUTE_CREW_CARD);
+        }
+    },
+
+    /** Route where the crew card is hidden in the office desk. */
+    OFFICE_CARD("Tarja a oficines") {
+        @Override
+        public void setup(ShipMap shipMap, EntityManager entityManager) {
+            placeCommonProgressionItems(shipMap);
+            shipMap.getRoom(RoomID.BEDROOM).addItem(ItemID.SMALL_KEY);
+            shipMap.getRoom(RoomID.LIVING_ROOM).addItem(ItemID.SNORKEL);
+            shipMap.getRoom(RoomID.OFFICES).addItem(ItemID.CREW_CARD);
+            shipMap.getRoom(RoomID.WORKSHOPS).addItem(ItemID.FLASHLIGHT);
+            entityManager.getCrewMember().moveTo(RoomID.BEDROOM);
+            entityManager.getCrewMember().setWakeBehavior(WakeResultType.FALSE_HINT,
+                    "El tripulant desperta confos i insisteix que la tarja es als banys, pero no sembla gaire segur.");
+        }
+
+        @Override
+        public void setupState(GameState state) {
+            state.addFlag(GameFlag.ROUTE_OFFICE_CARD);
         }
     };
 
@@ -51,5 +99,10 @@ public enum GameRoute {
      */
     public String getDisplayName() {
         return displayName;
+    }
+
+    private static void placeCommonProgressionItems(ShipMap shipMap) {
+        shipMap.getRoom(RoomID.WORKSHOPS).addItem(ItemID.REPAIR_TOOL);
+        shipMap.getRoom(RoomID.KITCHEN).addItem(ItemID.DONUT);
     }
 }

@@ -59,11 +59,16 @@ public record EntityManager(Player player, Malien malien, CrewMember crewMember)
     }
 
     /**
-     * Wakes the crew member if the action is valid.
+     * Interacts with the crew member if the action is valid.
      *
-     * @return wake result
+     * @return interaction result
      */
-    public CrewMember.WakeResult wakeCrewMember() {
-        return crewMember.wakeUp();
+    public CrewMember.CrewInteractionResult interactWithCrewMember(GameState state) {
+        if (player.getCurrentRoom() != crewMember.getCurrentRoom()) {
+            return new CrewMember.CrewInteractionResult(CrewMember.CrewInteractionResultType.NOT_IN_ROOM,
+                    "No hi ha cap tripulant en aquesta sala.");
+        }
+
+        return crewMember.interact(state);
     }
 }

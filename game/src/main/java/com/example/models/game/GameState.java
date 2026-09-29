@@ -13,7 +13,9 @@ import com.example.models.map.Room;
 import com.example.models.map.RoomID;
 import com.example.models.map.ShipMap;
 import com.example.models.entities.CrewMember;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,6 +28,7 @@ public final class GameState {
     private final GameRandom random;
     private final GameRoute route;
     private final Set<GameFlag> flags = EnumSet.noneOf(GameFlag.class);
+    private final List<String> eventMessages = new ArrayList<>();
     private int playerTurns;
     private int worldTurns;
     private boolean gameOver;
@@ -139,6 +142,7 @@ public final class GameState {
         }
 
         entityManager.getPlayer().moveTo(destination.getId());
+        entityManager.checkMalienEncounter(this);
 
         return true;
     }
@@ -170,6 +174,7 @@ public final class GameState {
     public void advanceWorldTurn() {
         worldTurns++;
         entityManager.takeEntityTurns(this);
+        entityManager.checkMalienEncounter(this);
     }
 
     /**
@@ -336,10 +341,48 @@ public final class GameState {
     }
 
     /**
+     * Indicates whether the mission has been completed successfully.
+     *
+     * @return {@code true} when the engines have been started
+     */
+    public boolean isGameWon() {
+        return hasFlag(GameFlag.MISSION_COMPLETED);
+    }
+
+    /**
      * Marks the game as over.
      */
     public void markGameOver() {
         gameOver = true;
+    }
+
+    /**
+     * Marks the mission as completed.
+     */
+    public void markGameWon() {
+        addFlag(GameFlag.MISSION_COMPLETED);
+    }
+
+    /**
+     * Adds a message produced by automatic game events.
+     *
+     * @param message event message
+     */
+    public void addEventMessage(String message) {
+        if (message != null && !message.isBlank()) {
+            eventMessages.add(message);
+        }
+    }
+
+    /**
+     * Returns and clears automatic event messages.
+     *
+     * @return pending event messages
+     */
+    public List<String> consumeEventMessages() {
+        List<String> messages = List.copyOf(eventMessages);
+        eventMessages.clear();
+        return messages;
     }
 
     public GameRandom getRandom() {

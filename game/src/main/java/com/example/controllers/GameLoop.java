@@ -25,6 +25,7 @@ import com.example.utils.input.Menu;
 import com.example.utils.ui.Prettier;
 import com.example.utils.ui.helpers.EntityDisplayer;
 import com.example.utils.ui.helpers.GameMenuBuilder;
+import com.example.utils.ui.helpers.GameOverDisplayer;
 
 /**
  * Runs one game session.
@@ -89,6 +90,10 @@ public class GameLoop {
         while (running && !state.isGameOver()) {
             ActionType actionType = readMenuOption(state);
             running = handleMenuShell(actionType, state, iHall);
+        }
+
+        if (state.isGameOver() || state.isGameWon()) {
+            GameOverDisplayer.show(cleaner, state);
         }
     }
 
@@ -187,7 +192,10 @@ public class GameLoop {
 
         if (success) {
             Prettier.info("Vas a: %s", destination.getName());
-            state.advancePlayerTurn();
+            if (!state.isGameOver()) {
+                state.advancePlayerTurn();
+            }
+            printEventMessages(state);
         } else if (state.isRoomLockedForPlayer(destination.getId())) {
             Prettier.warn("La sala de comandament està bloquejada. Necessites la tarja de tripulant.");
         } else {
@@ -464,6 +472,11 @@ public class GameLoop {
         return !result.success();
     }
 
+    /**
+     * Shows the iHall conversation screen.
+     *
+     * @param iHall session conversation helper
+     */
     private void talkToIHall(IHall iHall) {
         cleaner.clear();
         Prettier.printTitle("iHall");
@@ -537,6 +550,12 @@ public class GameLoop {
         return false;
     }
 
+    /**
+     * Indicates whether the crew member can be interacted with in the current room.
+     *
+     * @param state current game state
+     * @return {@code true} when the living crew member is in the player's room
+     */
     private boolean canInteractWithCrewMember(GameState state) {
         var crewMember = state.getEntityManager().getCrewMember();
         return crewMember.isAlive() && crewMember.getCurrentRoom() == state.getCurrentRoom().getId();
@@ -554,7 +573,19 @@ public class GameLoop {
     private void handleWaitMenu(GameState state) {
         state.advancePlayerTurn();
         Prettier.info(getWaitMessage(state));
+        printEventMessages(state);
         Menu.pause();
+    }
+
+    /**
+     * Prints pending automatic event messages and clears them from the state.
+     *
+     * @param state current game state
+     */
+    private void printEventMessages(GameState state) {
+        for (String message : state.consumeEventMessages()) {
+            Prettier.warn(message);
+        }
     }
 
     /**

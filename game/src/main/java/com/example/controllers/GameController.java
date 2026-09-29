@@ -1,7 +1,7 @@
 package com.example.controllers;
 
 import com.example.utils.input.Getters;
-import com.example.utils.ui.IntroStory;
+import com.example.utils.ui.helpers.IntroStory;
 
 /**
  * Coordinates the main game flow.

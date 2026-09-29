@@ -35,8 +35,7 @@ public final class GameGenerator {
         EntityManager entityManager = createEntityManager();
         GameRoute route = selectRoute();
         route.setup(shipMap, entityManager);
-        GameState state = new GameState(shipMap, itemCatalog, entityManager, random, route);
-        return state;
+        return new GameState(shipMap, itemCatalog, entityManager, random, route);
     }
 
     /**
@@ -64,7 +63,7 @@ public final class GameGenerator {
      */
     private EntityManager createEntityManager() {
         Player player = new Player(RoomID.BEDROOM);
-        Malien malien = new Malien(RoomID.BEDROOM);
+        Malien malien = new Malien(null);
         CrewMember crewMember = new CrewMember(RoomID.BEDROOM);
         return new EntityManager(player, malien, crewMember);
     }

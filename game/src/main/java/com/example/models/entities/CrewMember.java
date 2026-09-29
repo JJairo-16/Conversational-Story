@@ -160,10 +160,64 @@ public final class CrewMember extends Entity implements TurnActor {
      * @param state current game state
      */
     @Override
-    public void takeTurn(com.example.models.game.GameState state) {
+    public void takeTurn(GameState state) {
         if (asleep || !wandering) {
             return;
         }
+
+        if (state.getRandom().chance(EntityRules.CrewMember.SKIP_MOVEMENT_CHANCE)) {
+            return;
+        }
+
+        moveTo(selectMovementTarget(state));
+    }
+
+    /**
+     * Selects the crew member's next movement target.
+     *
+     * <p>
+     * If the target is Malien's current room, the crew member may reroll once
+     * according to its own configured chance.
+     *
+     * @param state current game state
+     * @return selected movement target
+     */
+    private RoomID selectMovementTarget(GameState state) {
+        RoomID target = randomAllowedRoom(state);
+
+        if (isMalienRoom(state, target)
+                && state.getRandom().chance(EntityRules.CrewMember.MALIEN_TARGET_REROLL_CHANCE)) {
+            target = randomAllowedRoom(state);
+        }
+
+        return target;
+    }
+
+    /**
+     * Selects a random room that non-player entities are allowed to occupy.
+     *
+     * @param state current game state
+     * @return allowed room identifier
+     */
+    private RoomID randomAllowedRoom(GameState state) {
+        RoomID target = state.getRandom().getRandomIndex(RoomID.values());
+        while (!EntityRules.Shared.isNpcRoomAllowed(target)) {
+            target = state.getRandom().getRandomIndex(RoomID.values());
+        }
+
+        return target;
+    }
+
+    /**
+     * Indicates whether a room is currently occupied by Malien.
+     *
+     * @param state  current game state
+     * @param target target room
+     * @return {@code true} when Malien is in the target room
+     */
+    private boolean isMalienRoom(GameState state, RoomID target) {
+        RoomID malienRoom = state.getEntityManager().getMalien().getCurrentRoom();
+        return malienRoom != null && target == malienRoom;
     }
 
     /**

@@ -15,5 +15,14 @@ public enum GameFlag {
     ENGINES_INSPECTED,
 
     /** Engines have been repaired. */
-    ENGINES_REPAIRED
+    ENGINES_REPAIRED,
+
+    /** The mission has been completed successfully. */
+    MISSION_COMPLETED,
+
+    /** The crew member has died. */
+    CREW_MEMBER_DIES,
+
+    /** The player has died. */
+    PLAYER_DIE;
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.example.models.actions.RoomAction;
 import com.example.models.game.GameState;
 import com.example.models.items.Item;
 import com.example.models.items.ItemID;
@@ -14,9 +15,9 @@ import com.example.models.map.RoomID;
  *
  * <p>
  * Some items exist in a room before they are visible to the player. For
- * example,
- * the kitchen donut requires the flashlight to reveal it, and the flooded
- * bathroom card requires the snorkel inspection route.
+ * example, the kitchen donut requires the flashlight to reveal it, the flooded
+ * bathroom card requires the snorkel inspection route, and items found through
+ * a room action stay hidden until that action is used.
  */
 final class RoomItemVisibility {
     private static final Comparator<ItemID> ITEM_ID_SORTER = Comparator.comparing(ItemID::name);
@@ -160,6 +161,53 @@ final class RoomItemVisibility {
             return state.isFloodedDrainRevealed();
         }
 
-        return true;
+        return !isHiddenByRoomAction(state, item);
+    }
+
+    /**
+     * Indicates whether an item should be obtained through a room action instead of
+     * generic visible collection.
+     *
+     * @param state current game state
+     * @param item  item to inspect
+     * @return {@code true} when a room action owns the item reveal
+     */
+    private static boolean isHiddenByRoomAction(GameState state, ItemID item) {
+        RoomID roomId = state.getCurrentRoom().getId();
+
+        return switch (roomId) {
+            case BEDROOM -> ownsActionItem(state, RoomAction.CHECK_LOCKER, item,
+                    ItemID.FLASHLIGHT, ItemID.SNORKEL, ItemID.SMALL_KEY);
+            case LIVING_ROOM -> ownsActionItem(state, RoomAction.SEARCH_TABLE, item,
+                    ItemID.SMALL_KEY, ItemID.SNORKEL, ItemID.FLASHLIGHT);
+            case OFFICES -> ownsActionItem(state, RoomAction.OPEN_DESK, item,
+                    ItemID.CREW_CARD, ItemID.SNORKEL);
+            case WORKSHOPS -> ownsActionItem(state, RoomAction.SEARCH_TOOLS, item,
+                    ItemID.REPAIR_TOOL, ItemID.FLASHLIGHT);
+            default -> false;
+        };
+    }
+
+    /**
+     * Indicates whether an action in the current room owns an item.
+     *
+     * @param state       current game state
+     * @param action      room action that may reveal the item
+     * @param item        item to inspect
+     * @param actionItems items owned by the action
+     * @return {@code true} when the item is present and belongs to the action
+     */
+    private static boolean ownsActionItem(GameState state, RoomAction action, ItemID item, ItemID... actionItems) {
+        if (!state.getCurrentRoom().hasAction(action) || !state.getCurrentRoom().hasItem(item)) {
+            return false;
+        }
+
+        for (ItemID actionItem : actionItems) {
+            if (item == actionItem) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

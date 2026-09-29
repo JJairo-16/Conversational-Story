@@ -192,6 +192,7 @@ public final class RoomActionHandler {
             return ActionResult.failure("Els motors encara no estan reparats.");
         }
 
+        state.markGameWon();
         return ActionResult.success("Engegues els motors. La nau torna a estar operativa.");
     }
 

@@ -140,6 +140,18 @@ final class RouteFeasibilityTest {
     }
 
     @Test
+    void snorkelCanInspectBathroomEvenWhenCardIsElsewhere() {
+        GameState state = createState(GameRoute.CREW_CARD);
+
+        action(state, RoomAction.CHECK_LOCKER);
+        move(state, Direction.NORTH);
+        action(state, RoomAction.INSPECT_FLOODED_DRAIN);
+
+        assertTrue(state.isFloodedDrainRevealed(),
+                "Using the snorkel in the bathroom must run the flooded drain inspection");
+    }
+
+    @Test
     void malienSpawnsAfterConfiguredWorldTurns() {
         GameState state = createState(GameRoute.DRAIN_CARD, new Malien(null));
 

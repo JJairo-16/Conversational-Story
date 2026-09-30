@@ -32,6 +32,6 @@ public class GameController {
     }
 
     private static boolean playAgain() {
-        return getters.getBoolean("Vols jugar de nou? ", false, "Sí", "No");
+        return getters.getBoolean("Vols jugar de nou? (Si/No): ", false, "Si", "No");
     }
 }

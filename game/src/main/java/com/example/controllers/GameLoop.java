@@ -21,6 +21,7 @@ import com.example.models.map.Direction;
 import com.example.models.map.Room;
 import com.example.models.map.RoomID;
 import com.example.utils.ui.Cleaner;
+import com.example.utils.input.Getters;
 import com.example.utils.input.Menu;
 import com.example.utils.ui.Prettier;
 import com.example.utils.ui.helpers.EntityDisplayer;
@@ -41,6 +42,7 @@ public class GameLoop {
             ActionType.EXIT);
 
     private final Cleaner cleaner = new Cleaner();
+    private final Getters getters = new Getters();
     private static final Comparator<RoomAction> ROOM_ACTION_COMPARATOR = Comparator
             .comparing(RoomAction::getDisplayName);
 
@@ -188,6 +190,10 @@ public class GameLoop {
             return;
         }
 
+        if (isMalienInDestination(state, destination) && !confirmDangerousMovement(destination)) {
+            return;
+        }
+
         boolean success = state.move(selectedExit.getKey());
 
         if (success) {
@@ -203,6 +209,29 @@ public class GameLoop {
         }
 
         Menu.pause();
+    }
+
+    /**
+     * Indicates whether Malien is currently in a destination room.
+     *
+     * @param state       current game state
+     * @param destination room the player wants to enter
+     * @return {@code true} when Malien occupies the destination
+     */
+    private boolean isMalienInDestination(GameState state, Room destination) {
+        RoomID malienRoom = state.getEntityManager().getMalien().getCurrentRoom();
+        return malienRoom != null && malienRoom == destination.getId();
+    }
+
+    /**
+     * Warns the player before entering a room occupied by Malien.
+     *
+     * @param destination destination room
+     * @return {@code true} when the player confirms the movement
+     */
+    private boolean confirmDangerousMovement(Room destination) {
+        Prettier.warn("En Malien és a %s. Entrar-hi pot ser perillós.", destination.getName());
+        return getters.getBoolean("Vols anar-hi igual? (Si/No): ", false, "Si", "No");
     }
 
     /**
@@ -520,34 +549,18 @@ public class GameLoop {
     private boolean isRoomActionUseful(GameState state, RoomAction action) {
         Room currentRoom = state.getCurrentRoom();
         return switch (action) {
-            case CHECK_LOCKER -> hasAnyItem(currentRoom, ItemID.FLASHLIGHT, ItemID.SNORKEL, ItemID.SMALL_KEY);
-            case INSPECT_FLOODED_DRAIN -> currentRoom.hasItem(ItemID.CREW_CARD) && !state.isFloodedDrainRevealed();
-            case SEARCH_TABLE -> hasAnyItem(currentRoom, ItemID.SMALL_KEY, ItemID.SNORKEL, ItemID.FLASHLIGHT);
-            case OPEN_DESK -> hasAnyItem(currentRoom, ItemID.CREW_CARD, ItemID.SNORKEL);
+            case CHECK_LOCKER -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case INSPECT_FLOODED_DRAIN -> !state.isFloodedDrainRevealed()
+                    && (currentRoom.hasItem(ItemID.CREW_CARD) || state.getInventory().has(ItemID.SNORKEL));
+            case SEARCH_TABLE -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case OPEN_DESK -> RoomActionItemRules.actionHasOwnedItem(state, action);
             case OPEN_SUIT_LOCKER -> !state.getInventory().has(ItemID.ASTRONAUT_SUIT);
-            case SEARCH_TOOLS -> hasAnyItem(currentRoom, ItemID.REPAIR_TOOL, ItemID.FLASHLIGHT);
+            case SEARCH_TOOLS -> RoomActionItemRules.actionHasOwnedItem(state, action);
             case INSPECT_ENGINES -> !state.areEnginesInspected();
             case REPAIR_ENGINES -> !state.areEnginesRepaired();
             case START_ENGINES -> true;
             case COLLECT_VISIBLE_ITEMS, TALK_CREW, WAKE_CREW -> true;
         };
-    }
-
-    /**
-     * Indicates whether a room contains at least one of the given items.
-     *
-     * @param room  room to inspect
-     * @param items accepted item identifiers
-     * @return {@code true} when any item is present
-     */
-    private boolean hasAnyItem(Room room, ItemID... items) {
-        for (ItemID item : items) {
-            if (room.hasItem(item)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

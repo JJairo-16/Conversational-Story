@@ -17,5 +17,11 @@ public enum ItemID {
     CREW_CARD,
 
     /** Snorkel required to retrieve an item from the flooded bathroom. */
-    SNORKEL;
+    SNORKEL,
+
+    /** Flashlight required to search dark rooms. */
+    FLASHLIGHT,
+
+    /** Small key used to open the astronaut suit locker. */
+    SMALL_KEY;
 }

@@ -1,35 +1,30 @@
 package com.example.models.actions;
 
 /**
- * Room-specific actions prepared for future escape-room puzzles.
+ * Physical interactions available inside ship rooms.
+ *
+ * <p>
+ * This enum intentionally excludes utility actions that belong to other menus,
+ * such as checking the map or inspecting carried inventory objects.
  */
 public enum RoomAction {
-    /** Search the cryosleep capsule area. */
-    SEARCH_CAPSULE("Registrar càpsula"),
-
     /** Check the personal locker in the bedroom. */
     CHECK_LOCKER("Revisar taquilla"),
+
+    /** Collect visible items in the current room. */
+    COLLECT_VISIBLE_ITEMS("Recollir objectes visibles"),
 
     /** Inspect the flooded drain without taking anything directly. */
     INSPECT_FLOODED_DRAIN("Mirar sota l'aigua"),
 
-    /** Try to lower or redirect the bathroom water. */
-    DRAIN_WATER("Drenar aigua"),
-
-    /** Search the dining table. */
-    SEARCH_TABLE("Registrar taula"),
+    /** Wake the crew member if present and asleep. */
+    WAKE_CREW("Despertar tripulant"),
 
     /** Talk to the crew member if present. */
     TALK_CREW("Parlar amb tripulant"),
 
-    /** Search the pantry for food or bait. */
-    SEARCH_PANTRY("Registrar rebost"),
-
-    /** Prepare bait for Malien. */
-    PREPARE_BAIT("Preparar esquer"),
-
-    /** Check the office terminal. */
-    CHECK_TERMINAL("Consultar terminal"),
+    /** Search the dining table. */
+    SEARCH_TABLE("Registrar taula"),
 
     /** Open the office desk. */
     OPEN_DESK("Obrir escriptori"),
@@ -37,23 +32,14 @@ public enum RoomAction {
     /** Open the suit locker. */
     OPEN_SUIT_LOCKER("Obrir armari del vestit"),
 
-    /** Equip the astronaut suit. */
-    EQUIP_SUIT("Equipar vestit"),
-
     /** Search the workshop tools. */
     SEARCH_TOOLS("Registrar eines"),
-
-    /** Repair or calibrate the repair tool. */
-    CALIBRATE_TOOL("Calibrar eina"),
 
     /** Inspect the damaged engines. */
     INSPECT_ENGINES("Inspeccionar motors"),
 
     /** Repair the damaged engines. */
     REPAIR_ENGINES("Reparar motors"),
-
-    /** Check ship and entity positions. */
-    CHECK_SHIP_MAP("Consultar mapa"),
 
     /** Start the engines after repairs. */
     START_ENGINES("Engegar motors");

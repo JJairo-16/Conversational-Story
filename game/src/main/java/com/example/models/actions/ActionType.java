@@ -20,6 +20,9 @@ public enum ActionType {
     /** Room interaction submenu. */
     INTERACTION("Interactuar"),
 
+    /** Conversation with the ship computer. */
+    I_HALL("Parlar amb iHall"),
+
     /** Do nothing and advance the loop. */
     WAIT("Esperar"),
 

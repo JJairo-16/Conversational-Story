@@ -29,7 +29,7 @@ public final class EntityDisplayer {
      */
     public static void printEntityMapInfo(Entity entity, GameState state) {
         Prettier.printTitle(formatEntityName(entity));
-        System.out.printf("Posició: %s%n", formatRoomName(state, entity.getCurrentRoom()));
+        System.out.printf("Posició: %s%n", formatEntityPosition(state, entity));
 
         if (entity instanceof Player player) {
             printPlayerMapInfo(player);
@@ -38,6 +38,14 @@ public final class EntityDisplayer {
         } else if (entity instanceof CrewMember crewMember) {
             printCrewMemberMapInfo(crewMember);
         }
+    }
+
+    private static String formatEntityPosition(GameState state, Entity entity) {
+        if (entity instanceof Malien && entity.getCurrentRoom() == null) {
+            return "No detectat";
+        }
+
+        return formatRoomName(state, entity.getCurrentRoom());
     }
 
     /**

@@ -3,6 +3,14 @@ package com.example.models.items;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.example.models.items.instances.AstronautSuit;
+import com.example.models.items.instances.CrewCard;
+import com.example.models.items.instances.Donut;
+import com.example.models.items.instances.Flashlight;
+import com.example.models.items.instances.RepairTool;
+import com.example.models.items.instances.SmallKey;
+import com.example.models.items.instances.Snorkel;
+
 /**
  * Catalog of all available item definitions.
  */
@@ -30,13 +38,13 @@ public final class ItemCatalog {
      * Registers the known item definitions.
      */
     private void createItems() {
-        add(new Item(ItemID.DONUT, "Dònut", "Distracció temporal per a en Malien.", true, true, null));
-        add(new Item(ItemID.ASTRONAUT_SUIT, "Vestit d'astronauta", "Equip necessari per sortir de la nau.", false,
-                true, null));
-        add(new Item(ItemID.REPAIR_TOOL, "Eina especial", "Eina necessària per reparar els propulsors.", false,
-                true, null));
-        add(new Item(ItemID.CREW_CARD, "Tarja de tripulant", "Tarja personal per obrir portes.", false, true, null));
-        add(new Item(ItemID.SNORKEL, "Snorkel", "Permet veure sota l'aigua al bany inundat.", false, true, null));
+        add(new Donut());
+        add(new AstronautSuit());
+        add(new RepairTool());
+        add(new CrewCard());
+        add(new Snorkel());
+        add(new Flashlight());
+        add(new SmallKey());
     }
 
     /**

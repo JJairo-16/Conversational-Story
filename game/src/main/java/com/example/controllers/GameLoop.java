@@ -21,10 +21,12 @@ import com.example.models.map.Direction;
 import com.example.models.map.Room;
 import com.example.models.map.RoomID;
 import com.example.utils.ui.Cleaner;
+import com.example.utils.input.Getters;
 import com.example.utils.input.Menu;
 import com.example.utils.ui.Prettier;
 import com.example.utils.ui.helpers.EntityDisplayer;
 import com.example.utils.ui.helpers.GameMenuBuilder;
+import com.example.utils.ui.helpers.GameOverDisplayer;
 
 /**
  * Runs one game session.
@@ -35,10 +37,12 @@ public class GameLoop {
             ActionType.INVENTORY,
             ActionType.MAP,
             ActionType.INTERACTION,
+            ActionType.I_HALL,
             ActionType.WAIT,
             ActionType.EXIT);
 
     private final Cleaner cleaner = new Cleaner();
+    private final Getters getters = new Getters();
     private static final Comparator<RoomAction> ROOM_ACTION_COMPARATOR = Comparator
             .comparing(RoomAction::getDisplayName);
 
@@ -82,11 +86,16 @@ public class GameLoop {
     public void run() {
         GameRandom random = new GameRandom(System.currentTimeMillis());
         GameState state = new GameGenerator(random).generate();
+        IHall iHall = IHall.create(state.getRoute(), random);
         boolean running = true;
 
         while (running && !state.isGameOver()) {
             ActionType actionType = readMenuOption(state);
-            running = handleMenuShell(actionType, state);
+            running = handleMenuShell(actionType, state, iHall);
+        }
+
+        if (state.isGameOver() || state.isGameWon()) {
+            GameOverDisplayer.show(cleaner, state);
         }
     }
 
@@ -98,9 +107,11 @@ public class GameLoop {
      */
     private List<String> createCurrentPositionDetails(GameState state) {
         Room currentRoom = state.getCurrentRoom();
-        return List.of(
-                "Posició actual: " + currentRoom.getName(),
-                currentRoom.getDescription());
+        List<String> details = new ArrayList<>();
+        details.add("Posició actual: " + currentRoom.getName());
+        details.add(currentRoom.getDescription());
+        details.addAll(RoomItemVisibility.describeCurrentRoomItems(state));
+        return details;
     }
 
     /**
@@ -124,12 +135,15 @@ public class GameLoop {
      * @param state      current game state
      * @return {@code false} only when the player chooses to exit the session
      */
-    private boolean handleMenuShell(ActionType actionType, GameState state) {
+    private boolean handleMenuShell(ActionType actionType, GameState state, IHall iHall) {
         switch (actionType) {
             case NAVIGATION -> handleNavigationMenu(state);
             case INVENTORY -> handleInventoryMenu(state);
             case MAP -> handleMapMenu(state);
-            case INTERACTION -> handleInteractionMenu(state);
+            case INTERACTION -> {
+                return handleInteractionMenu(state);
+            }
+            case I_HALL -> talkToIHall(iHall);
             case WAIT -> handleWaitMenu(state);
             case EXIT -> {
                 cleaner.clear();
@@ -176,16 +190,48 @@ public class GameLoop {
             return;
         }
 
+        if (isMalienInDestination(state, destination) && !confirmDangerousMovement(destination)) {
+            return;
+        }
+
         boolean success = state.move(selectedExit.getKey());
 
         if (success) {
             Prettier.info("Vas a: %s", destination.getName());
-            state.advancePlayerTurn();
+            if (!state.isGameOver()) {
+                state.advancePlayerTurn();
+            }
+            printEventMessages(state);
+        } else if (state.isRoomLockedForPlayer(destination.getId())) {
+            Prettier.warn("La sala de comandament està bloquejada. Necessites la tarja de tripulant.");
         } else {
             Prettier.warn("No pots anar a aquesta sala.");
         }
 
         Menu.pause();
+    }
+
+    /**
+     * Indicates whether Malien is currently in a destination room.
+     *
+     * @param state       current game state
+     * @param destination room the player wants to enter
+     * @return {@code true} when Malien occupies the destination
+     */
+    private boolean isMalienInDestination(GameState state, Room destination) {
+        RoomID malienRoom = state.getEntityManager().getMalien().getCurrentRoom();
+        return malienRoom != null && malienRoom == destination.getId();
+    }
+
+    /**
+     * Warns the player before entering a room occupied by Malien.
+     *
+     * @param destination destination room
+     * @return {@code true} when the player confirms the movement
+     */
+    private boolean confirmDangerousMovement(Room destination) {
+        Prettier.warn("En Malien és a %s. Entrar-hi pot ser perillós.", destination.getName());
+        return getters.getBoolean("Vols anar-hi igual? (Si/No): ", false, "Si", "No");
     }
 
     /**
@@ -291,10 +337,11 @@ public class GameLoop {
      * @param state current game state
      */
     private void useInventoryItem(Item item, GameState state) {
-        if (state.useItem(item.id())) {
-            Prettier.info("Has utilitzat: %s", item.name());
+        ActionResult result = state.useItem(item.id());
+        if (result.success()) {
+            Prettier.info(result.message());
         } else {
-            Prettier.warn("Ara mateix no pots utilitzar aquest objecte.");
+            Prettier.warn(result.message());
         }
         Menu.pause();
     }
@@ -418,40 +465,113 @@ public class GameLoop {
      * objects are relevant.
      *
      * @param state current game state
+     * @return {@code false} only when a successful action ends the session
      */
-    private void handleInteractionMenu(GameState state) {
-        List<RoomAction> actions = state.getCurrentRoom()
-                .getActions()
-                .stream()
-                .sorted(ROOM_ACTION_COMPARATOR)
-                .toList();
+    private boolean handleInteractionMenu(GameState state) {
+        List<RoomAction> actions = getCurrentRoomActions(state);
 
         if (actions.isEmpty()) {
             Prettier.warn("No hi ha interaccions disponibles en aquesta sala.");
             Menu.pause();
-            return;
+            return true;
         }
 
         List<String> options = GameMenuBuilder.createInteractionMenu(actions);
         int option = Menu.getOption(options, "Interaccions");
 
         if (option == options.size()) {
-            return;
+            return true;
         }
 
         RoomAction selected = actions.get(option - 1);
         ActionResult result = RoomActionHandler.handle(selected, state);
 
-        if (result.message().isBlank()) {
-            return;
+        if (!result.message().isBlank()) {
+            if (result.success()) {
+                Prettier.info(result.message());
+            } else {
+                Prettier.warn(result.message());
+            }
         }
 
-        if (result.success()) {
-            Prettier.info(result.message());
-        } else {
-            Prettier.warn(result.message());
-        }
         Menu.pause();
+        if (selected != RoomAction.START_ENGINES)
+            return true;
+
+        return !result.success();
+    }
+
+    /**
+     * Shows the iHall conversation screen.
+     *
+     * @param iHall session conversation helper
+     */
+    private void talkToIHall(IHall iHall) {
+        cleaner.clear();
+        Prettier.printTitle("iHall");
+        Prettier.info(iHall.nextResponse());
+        Menu.pause();
+    }
+
+    private List<RoomAction> getCurrentRoomActions(GameState state) {
+        List<RoomAction> actions = new ArrayList<>(state.getCurrentRoom()
+                .getActions()
+                .stream()
+                .filter(action -> action != RoomAction.COLLECT_VISIBLE_ITEMS)
+                .filter(action -> action != RoomAction.TALK_CREW)
+                .filter(action -> action != RoomAction.WAKE_CREW)
+                .filter(action -> isRoomActionUseful(state, action))
+                .toList());
+
+        if (!RoomItemVisibility.getVisibleItems(state).isEmpty()) {
+            actions.add(RoomAction.COLLECT_VISIBLE_ITEMS);
+        }
+
+        if (canInteractWithCrewMember(state)) {
+            RoomAction crewAction = state.getEntityManager().getCrewMember().isAsleep()
+                    ? RoomAction.WAKE_CREW
+                    : RoomAction.TALK_CREW;
+            actions.add(crewAction);
+        }
+
+        return actions.stream()
+                .sorted(ROOM_ACTION_COMPARATOR)
+                .toList();
+    }
+
+    /**
+     * Indicates whether a fixed room action can still affect the current state.
+     *
+     * @param state  current game state
+     * @param action room action to inspect
+     * @return {@code true} when the action should be shown
+     */
+    private boolean isRoomActionUseful(GameState state, RoomAction action) {
+        Room currentRoom = state.getCurrentRoom();
+        return switch (action) {
+            case CHECK_LOCKER -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case INSPECT_FLOODED_DRAIN -> !state.isFloodedDrainRevealed()
+                    && (currentRoom.hasItem(ItemID.CREW_CARD) || state.getInventory().has(ItemID.SNORKEL));
+            case SEARCH_TABLE -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case OPEN_DESK -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case OPEN_SUIT_LOCKER -> !state.getInventory().has(ItemID.ASTRONAUT_SUIT);
+            case SEARCH_TOOLS -> RoomActionItemRules.actionHasOwnedItem(state, action);
+            case INSPECT_ENGINES -> !state.areEnginesInspected();
+            case REPAIR_ENGINES -> !state.areEnginesRepaired();
+            case START_ENGINES -> true;
+            case COLLECT_VISIBLE_ITEMS, TALK_CREW, WAKE_CREW -> true;
+        };
+    }
+
+    /**
+     * Indicates whether the crew member can be interacted with in the current room.
+     *
+     * @param state current game state
+     * @return {@code true} when the living crew member is in the player's room
+     */
+    private boolean canInteractWithCrewMember(GameState state) {
+        var crewMember = state.getEntityManager().getCrewMember();
+        return crewMember.isAlive() && crewMember.getCurrentRoom() == state.getCurrentRoom().getId();
     }
 
     /**
@@ -466,7 +586,19 @@ public class GameLoop {
     private void handleWaitMenu(GameState state) {
         state.advancePlayerTurn();
         Prettier.info(getWaitMessage(state));
+        printEventMessages(state);
         Menu.pause();
+    }
+
+    /**
+     * Prints pending automatic event messages and clears them from the state.
+     *
+     * @param state current game state
+     */
+    private void printEventMessages(GameState state) {
+        for (String message : state.consumeEventMessages()) {
+            Prettier.warn(message);
+        }
     }
 
     /**
@@ -477,12 +609,11 @@ public class GameLoop {
      */
     private String getWaitMessage(GameState state) {
         GameRandom random = state.getRandom();
-        
+
         List<String> messages = random.chance(NORMAL_WAIT_MESSAGE_CHANCE)
                 ? NORMAL_WAIT_MESSAGES
                 : SILLY_WAIT_MESSAGES;
-                
-        int messageIndex = random.nextInt(messages.size());
-        return messages.get(messageIndex);
+
+        return random.getRandomIndex(messages);
     }
 }

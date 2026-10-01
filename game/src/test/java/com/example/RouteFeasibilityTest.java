@@ -210,6 +210,11 @@ final class RouteFeasibilityTest {
         assertTrue(state.getEntityManager().getCrewMember().isAlive(), "Donut must also protect the awake crew member");
         assertFalse(state.getInventory().has(ItemID.DONUT), "Automatic distraction must consume the donut");
         assertTrue(state.getEntityManager().getMalien().isDistracted(), "Automatic donut must distract Malien");
+        assertTrue(state.getEntityManager().getPlayer().getCurrentRoom() != RoomID.BEDROOM,
+                "Automatic donut use must move the player away from Malien");
+        assertTrue(state.getEntityManager().getCrewMember().getCurrentRoom()
+                == state.getEntityManager().getPlayer().getCurrentRoom(),
+                "Crew member must flee with the player when both were together");
         assertFalse(state.consumeEventMessages().isEmpty(), "Automatic donut use must produce a message");
     }
 

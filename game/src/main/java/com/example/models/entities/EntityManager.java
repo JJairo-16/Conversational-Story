@@ -1,8 +1,12 @@
 package com.example.models.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.models.game.GameFlag;
 import com.example.models.game.GameState;
 import com.example.models.items.ItemID;
+import com.example.models.map.RoomID;
 
 /**
  * Owns the game entities and coordinates entity-level events.
@@ -73,10 +77,19 @@ public record EntityManager(Player player, Malien malien, CrewMember crewMember)
         }
 
         if (meetsPlayer && state.getInventory().has(ItemID.DONUT)) {
+            boolean crewWasWithPlayer = meetsAwakeCrew;
+            RoomID escapeRoom = selectEscapeRoom(state);
+            
             state.getInventory().remove(ItemID.DONUT);
             malien.distract(EntityRules.Malien.DONUT_DISTRACTION_TURNS);
+            
+            player.moveTo(escapeRoom);
+            if (crewWasWithPlayer) {
+                crewMember.moveTo(escapeRoom);
+            }
+            
             state.addEventMessage("En Malien et troba, però llances automàticament el dònut. Queda atordit durant "
-                    + EntityRules.Malien.DONUT_DISTRACTION_TURNS + " torns.");
+                    + EntityRules.Malien.DONUT_DISTRACTION_TURNS + " torns i aprofiteu per fugir.");
             return false;
         }
 
@@ -94,6 +107,46 @@ public record EntityManager(Player player, Malien malien, CrewMember crewMember)
         }
 
         return false;
+    }
+
+    /**
+     * Selects a room where the player can flee after distracting Malien.
+     *
+     * @param state current game state
+     * @return escape room identifier
+     */
+    private RoomID selectEscapeRoom(GameState state) {
+        List<RoomID> candidates = new ArrayList<>();
+
+        for (RoomID roomId : state.getCurrentRoom().getConnections().values()) {
+            if (isEscapeRoomAllowed(state, roomId)) {
+                candidates.add(roomId);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            for (RoomID roomId : RoomID.values()) {
+                if (isEscapeRoomAllowed(state, roomId)) {
+                    candidates.add(roomId);
+                }
+            }
+        }
+
+        return state.getRandom().getRandomIndex(candidates);
+    }
+
+    /**
+     * Indicates whether a room can be used as a forced escape destination.
+     *
+     * @param state  current game state
+     * @param roomId candidate room
+     * @return {@code true} when the room is safe enough for forced movement
+     */
+    private boolean isEscapeRoomAllowed(GameState state, RoomID roomId) {
+        return roomId != null
+                && roomId != malien.getCurrentRoom()
+                && !state.isRoomLockedForPlayer(roomId)
+                && EntityRules.Shared.isNpcRoomAllowed(roomId);
     }
 
     /**
